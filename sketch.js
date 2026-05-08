@@ -9,9 +9,13 @@ let shapeBtn1;
 let shapeBtn2; 
 let saveBtn; 
 let clearBtn;
+let undoBtn; 
 
 //set a default shape 
 let selectedShape = 'circle';
+
+let history = []; 
+
 
 
 function setup() {
@@ -61,13 +65,29 @@ function setup() {
   saveBtn.mousePressed(() => {
     let canvasExport = get(0, 0, 400, 400); 
     canvasExport.save('my_artwork', 'png'); 
+    
 });
+
+
+//undo button by changing the history array 
+ undoBtn = createButton('Undo');
+  undoBtn.position(420, 280);
+  undoBtn.mousePressed(undo);
 
   
 //clear by drawing a canvas on top of the old art to start a fresh. 
 clearBtn = createButton('Delete/Clear');
-  clearBtn.position(420, 280);
-  clearBtn.mousePressed(() => background(255));
+  clearBtn.position(420, 310); 
+  clearBtn.mousePressed(() => {
+    // Clear drawing a blank canvas on the screen. 
+    fill(255);
+    rect(0, 0, 400, 400);
+    history = [];
+    saveState();
+  });
+
+
+
 }
 
 
@@ -103,5 +123,43 @@ function mousePressed () {
 
       // pop restores the previous settings, making every click unique. 
       pop(); 
+
+      //save this image now 
+      saveState(); 
     }
+}
+
+
+// a way to save the progress made for easier undo 
+function saveState() {
+
+  //this is an image of everything on the canvas 
+  let snapshot = get(0, 0, 400, 400);
+
+  //save the snapshot as is, and add it to the list, 
+  // so that anytime we pop it, we can go back to previous image
+  history.push(snapshot);
+  
+  //to save on memory, let's only store 42 objects. 
+  //if we have gone past 42 steps, we cannot undo everything else. 
+  if (history.length > 42) {
+    //remove the first element in the list to keep the most current version 
+    history.shift();
+  }
+}
+
+function undo() {
+
+  //this allows us to everything one step at a time. except the first one. 
+  // at that point, we just clear and start over. 
+  if (history.length > 1) {
+    //remove the latest image from the snapshot and take us back to the previous one. 
+    history.pop();
+
+    //take the previous state, which is now the last element on the history. 
+    let prevState = history[history.length - 1]; 
+
+    //draw that image on the canvas and allow us to continue from here. 
+    image(prevState, 0, 0); 
+  }
 }
